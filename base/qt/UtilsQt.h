@@ -11,6 +11,9 @@ void drawCenteredImage(QPainter& painter,QImage image,qreal x,qreal y);
 
 point2d_t toPoint(QPointF p);
 cLine     toLine(QLineF l);
+cPolygon  toPolygon(QRectF r);
+cPolygon  toPolygon(QPolygonF pol);
 
 QPointF   toQPoint(point2d_t p);
 QLineF    toQLine(const cLine& l);
+QPolygonF toQPolygon(const cPolygon& pol);

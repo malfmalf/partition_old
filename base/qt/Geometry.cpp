@@ -16,12 +16,12 @@ numcmp(number_t n1,number_t n2){
 
 bool 
 between(number_t n,number_t from,number_t to){
-    return numcmp(n,from) || numcmp(n,to) || (n>from && n<to) || (n>to && n<from);
+    return between(n,from,to,default_comparison_epsilon);
 }
 
 bool 
 between(number_t n,number_t from,number_t to,number_t epsilon){
-    return between(n,from,to,default_comparison_epsilon);
+    return numcmp(n,from,epsilon) || numcmp(n,to,epsilon) || (n>from && n<to) || (n>to && n<from);
 }
 
 number_t 
@@ -349,7 +349,7 @@ cLine::fromPointAndDir(const point2d_t& p,const point2d_t& d){
 }
 
 int 
-cLine::side(const point2d_t& p){
+cLine::side(const point2d_t& p) const{
     point2d_t d = p - mP1;
     number_t s = cross(d,dir());
     if(numcmp(s,0.0)) return 0;
@@ -395,4 +395,183 @@ ray_clip(const cLine& ray,const tLineList& clip_lines,point2d_t& point){
         }
     }
     return best_d1>=0.0;
+}
+
+
+cPolygon::cPolygon(void){
+
+}
+
+
+cPolygon::cPolygon(const tPointList& pl) : mPoints(pl){
+    _calclines();
+}
+
+void
+cPolygon::clear(void){
+    mPoints.clear();
+    mLines.clear();
+}
+
+bool 
+cPolygon::isValid(void) const{
+    return mPoints.size()>2;
+}
+
+void 
+cPolygon::addPoint(const point2d_t& p){
+    if(!mPoints.empty()) assert(!numcmp(distanceSquared(p,mPoints.back()),0.0));
+    mPoints.push_back(p);
+    _calclines();
+}
+
+int 
+cPolygon::numPoints(void) const{
+    return mPoints.size();
+}
+
+const tPointList& 
+cPolygon::points(void) const{
+    return mPoints;
+}
+
+const point2d_t& 
+cPolygon::operator[](int i) const{
+    return mPoints[i];
+}
+
+
+bool 
+cPolygon::isInside(const point2d_t& p) const{
+    if(!isValid()) return false;
+    int good_side = mLines[0].side(p);
+    for(size_t i = 1;i<mLines.size();++i){
+        int s = mLines[i].side(p);
+        if(good_side==0 && s!=0) good_side=s;
+        if(s!= 0  && s!=good_side) return false;
+    }
+    return true;
+}
+
+
+bool 
+cPolygon::isect(const cLine& l,tPointList* results) const{
+    if(!isValid()) return false;
+    point2d_t result;
+    bool hit = false;
+    for(size_t i = 0;i<mLines.size();++i){
+        if(::isect(l,mLines[i],&result)){
+            hit = true;
+            results->push_back(result);
+        }
+    }
+    return hit;
+}
+
+bool 
+cPolygon::clip(cLine& l) const{
+    if(!isValid()) return false;
+    if(isInside(l.p1())){
+        if(isInside(l.p2())) return true;
+        tPointList r;
+        isect(l,&r);
+        assert(r.size()==1);
+        l.setP2(r[0]);
+        return true;
+    }
+    else if(isInside(l.p2())){
+        tPointList r;
+        isect(l,&r);
+        assert(r.size()==1);
+        l.setP1(r[0]);
+        return true;
+    }
+    else{
+        tPointList r;
+        isect(l,&r);
+        if(r.size()==2){
+            if(lengthSquared(l.p1()-r[0])>lengthSquared(l.p1()-r[1])){
+                l.set(r[0],r[1]);
+            }
+            else{
+                l.set(r[1],r[0]);
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
+
+bool 
+cPolygon::ray_clip(const cLine& l,point2d_t& point) const{
+    if(!isValid()) return false;
+    return ::ray_clip(l,mLines,point);
+}
+
+void 
+cPolygon::_calclines(void){
+    if(!isValid()) return;
+    mLines.clear();
+    for(size_t i = 1;i<mPoints.size();++i){
+        mLines.push_back(cLine(mPoints[i-1],mPoints[i]));
+    }
+    mLines.push_back(cLine(mPoints.back(),mPoints.front()));
+}
+
+bool 
+cPolygon::bisect(const cLine& l,cPolygon& pl1,cPolygon& pl2){
+    if(!isValid()) return false;
+    if(!isInside(l.p1())) return false;
+
+    cLine ol(l.p1(),l.p1()-l.dir());
+    int idip1 = -1;
+    int idip2 = -1;
+    point2d_t ip1,ip2;
+
+    for(size_t i = 0;i<mLines.size();++i){
+        if(idip1>=0 && idip2>=0) break;
+
+        if(idip1<0){
+            if(ray_isect(l,mLines[i],&ip1)==POINT){
+                idip1 = i;
+            }
+        }
+        if(idip2<0 || idip2==idip1){
+            if(ray_isect(ol,mLines[i],&ip2)==POINT){
+                idip2 = i;
+            }
+        }
+    }
+    if(idip1<0 ||idip2<0) 
+        return false;
+    if(idip1==idip2) 
+        return false;//las dos comprobaciones son chorras
+    
+    if(idip1>idip2){
+        qSwap(idip1,idip2);
+        qSwap(ip1,ip2);
+    }
+    
+    pl1.mPoints.clear();
+    for(size_t i = 0;i<idip1+1;++i){
+        pl1.mPoints.push_back(mPoints[i]);
+    }
+    pl1.mPoints.push_back(ip1);
+    pl1.mPoints.push_back(ip2);
+    for(size_t i = idip2+1;i<mPoints.size();++i){
+        pl1.mPoints.push_back(mPoints[i]);
+    }
+
+    pl2.mPoints.clear();
+    pl2.mPoints.push_back(ip1);
+    for(size_t i = idip1+1;i<idip2+1;++i){
+        pl2.mPoints.push_back(mPoints[i]);
+    }
+    pl2.mPoints.push_back(ip2);
+
+    pl1._calclines();
+    pl2._calclines();
+
+    return true;
 }
