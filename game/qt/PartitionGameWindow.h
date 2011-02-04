@@ -20,7 +20,13 @@ protected:
     virtual void mousePressEvent(QMouseEvent* event);
     virtual void mouseMoveEvent(QMouseEvent* event);
     virtual void mouseReleaseEvent(QMouseEvent* event);
+
     virtual void paintEvent(QPaintEvent* event);
+
+    void paintCurrentLine(QPainter &pt);
+    void paintLines(QPainter &pt);
+    void paintAreas(QPainter &pt);
+    bool clipLine(cLine& l);
 private:
     int mNumBalls;
     double mSpeed;
@@ -29,5 +35,8 @@ private:
     tLineList mLines;
     cLine mCurrentLine;
     bool mDrawingLine;
+
+    typedef std::list<cPolygon> tPolygonList;
+    tPolygonList mPolygons;
 
 };

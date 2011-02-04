@@ -53,7 +53,7 @@ public:
     const point2d_t& p2(void) const; 
     point2d_t dir(void) const; 
     static cLine fromPointAndDir(const point2d_t& p,const point2d_t& d);
-    int side(const point2d_t& p);
+    int side(const point2d_t& p) const;
     void rotateAroundCenter(number_t r);
     void rotateAroundPoint(number_t r,const point2d_t& p);
     void translate(const point2d_t& p);
@@ -66,3 +66,27 @@ private:
 typedef std::vector<cLine> tLineList;
 
 bool ray_clip(const cLine& ray,const tLineList& clip_lines,point2d_t& point);
+
+class cPolygon{
+public:
+    cPolygon(void);
+    cPolygon(const tPointList& pl);
+    void clear(void);
+    bool isValid(void) const;
+    void addPoint(const point2d_t& p);
+    int  numPoints(void) const;
+    const tPointList& points(void) const;
+    const point2d_t& operator[] (int i) const;
+    bool isInside(const point2d_t& p) const;//valido solo para convex
+    bool isect(const cLine& l,tPointList* results) const;
+    bool clip(cLine& l) const;
+    bool ray_clip(const cLine& l,point2d_t& point) const;
+    bool bisect(const cLine& l,cPolygon& pl1,cPolygon& pl2);
+private:
+    tPointList mPoints;
+    tLineList  mLines;
+private:
+    void _calclines(void);
+};
+
+

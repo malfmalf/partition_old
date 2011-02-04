@@ -74,6 +74,27 @@ cLine
 toLine(QLineF l){
     return cLine(l.p1(),l.p2());
 }
+cPolygon 
+toPolygon(QRectF r){
+    cPolygon pol;
+    pol.addPoint(r.topLeft()    );
+    pol.addPoint(r.topRight()   );
+    pol.addPoint(r.bottomRight());
+    pol.addPoint(r.bottomLeft() );
+    return pol;
+}
+
+cPolygon 
+toPolygon(QPolygonF pol){
+    cPolygon result;
+    if(pol.empty()) return result;
+    point2d_t center;
+    size_t count = pol.isClosed() ? pol.size() -1 : pol.size();
+    for(size_t i = 0;i<count;++i){
+        result.addPoint(pol[i]);
+    }
+    return result;
+}
 
 QPointF 
 toQPoint(point2d_t p){
@@ -84,3 +105,15 @@ QLineF
 toQLine(const cLine& l){
     return QLineF(l.p1(),l.p2());
 }
+
+QPolygonF 
+toQPolygon(const cPolygon& pol){
+    QPolygonF result;
+    if(!pol.isValid()) return result;
+    for(size_t i = 0;i<pol.numPoints();++i){
+        result.push_back(pol.points()[i]);
+    }
+    result.push_back(pol.points()[0]);
+    return result;
+}
+
