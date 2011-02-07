@@ -580,3 +580,13 @@ cPolygon::bisect(const cLine& l,cPolygon& pl1,cPolygon& pl2){
 
     return true;
 }
+
+point2d_t 
+cPolygon::center(void) const{
+    point2d_t c;
+    if(!isValid()) return c;
+    for(size_t i = 0;i<mPoints.size();++i){
+        c += mPoints[i];
+    }
+    return c/mPoints.size();
+}

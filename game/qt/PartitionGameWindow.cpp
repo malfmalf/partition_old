@@ -182,12 +182,17 @@ PartitionGameWindow::paintAreas(QPainter &pt){
     colors.push_back(QColor(0,100,0,100));
     colors.push_back(QColor(0,0,100,100));
     int cidx = 0;
-    pt.setPen(Qt::NoPen);
     for(tPolygonList::const_iterator it = mPolygons.begin();it!=mPolygons.end();++it){
+        int bc = 0;
+        for(tBallList::const_iterator bit = mBalls.begin();bit!=mBalls.end();++bit) if(it->isInside(bit->position())) ++bc;
+        pt.setPen(Qt::NoPen);
         pt.setBrush(QColor(colors[cidx]));
         pt.drawPolygon(toQPolygon(*it));
         ++cidx;
         if(cidx>=colors.size()) cidx = 0;
+        pt.setPen(QColor(0,0,0,255));
+        pt.drawText(toQPoint(it->center()),QString::number(bc));
+
     }
 }
 
