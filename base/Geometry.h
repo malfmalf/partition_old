@@ -83,6 +83,7 @@ public:
     bool clip(cLine& l) const;
     bool ray_clip(const cLine& l,point2d_t& point) const;
     bool bisect(const cLine& l,cPolygon& pl1,cPolygon& pl2);
+    point2d_t center(void) const;
 private:
     tPointList mPoints;
     tLineList  mLines;
