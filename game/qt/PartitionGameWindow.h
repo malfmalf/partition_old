@@ -3,7 +3,7 @@
 #include <QtGui>
 
 #include "Geometry.h"
-
+#include "Ball.h"
 
 class PartitionGameWindow : public QWidget {
     Q_OBJECT
@@ -26,17 +26,20 @@ protected:
     void paintCurrentLine(QPainter &pt);
     void paintLines(QPainter &pt);
     void paintAreas(QPainter &pt);
+    void paintBalls(QPainter &pt);
     bool clipLine(cLine& l);
 private:
+    QTimer* mTimer;
     int mNumBalls;
     double mSpeed;
     int mGameWidth;
     int mGameHeight;
-    tLineList mLines;
     cLine mCurrentLine;
     bool mDrawingLine;
 
     typedef std::list<cPolygon> tPolygonList;
     tPolygonList mPolygons;
+    tLineList mLines;
+    tBallList    mBalls;
 
 };
