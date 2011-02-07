@@ -1,24 +1,40 @@
 #include "PartitionGameWindow.h"
 #include "UtilsQt.h"
 
+static const int step_ms = 16;
+
 PartitionGameWindow::PartitionGameWindow(QWidget* parent/* = NULL*/) : QWidget(parent){
+    setSpeed(140.0);
+    setNumBalls(1);
     setGameWidth(300);
     setGameHeight(300);
+    mTimer = new QTimer(this);
+    connect(mTimer,SIGNAL(timeout()),this,SLOT(step()));
+    mTimer->setSingleShot(false);
+    mTimer->start(step_ms);
 }
 
 void 
 PartitionGameWindow::step(void){
-
+    for(tBallList::iterator it = mBalls.begin();it!=mBalls.end();++it){
+        it->collide(mLines,mBalls);
+    }
+    for(tBallList::iterator it = mBalls.begin();it!=mBalls.end();++it){
+        it->step(step_ms/1000.0);
+    }
+    update();
 }
 
 void 
 PartitionGameWindow::reset(void){
-    mLines.clear();
     QPointF center(width()/2,height()/2);
+
+    mLines.clear();
     mLines.push_back(cLine(point2d_t(center.x()-mGameWidth/2,center.y()-mGameHeight/2),point2d_t(center.x()+mGameWidth/2,center.y()-mGameHeight/2)));
     mLines.push_back(cLine(point2d_t(center.x()+mGameWidth/2,center.y()-mGameHeight/2),point2d_t(center.x()+mGameWidth/2,center.y()+mGameHeight/2)));
     mLines.push_back(cLine(point2d_t(center.x()+mGameWidth/2,center.y()+mGameHeight/2),point2d_t(center.x()-mGameWidth/2,center.y()+mGameHeight/2)));
     mLines.push_back(cLine(point2d_t(center.x()-mGameWidth/2,center.y()+mGameHeight/2),point2d_t(center.x()-mGameWidth/2,center.y()-mGameHeight/2)));
+    
     cPolygon poly;
     poly.addPoint(point2d_t(center.x()-mGameWidth/2,center.y()-mGameHeight/2));
     poly.addPoint(point2d_t(center.x()+mGameWidth/2,center.y()-mGameHeight/2));
@@ -26,29 +42,40 @@ PartitionGameWindow::reset(void){
     poly.addPoint(point2d_t(center.x()-mGameWidth/2,center.y()+mGameHeight/2));
     mPolygons.clear();
     mPolygons.push_back(poly);
-    QMouseEvent ev(QEvent::MouseButtonPress,(center+QPointF(0.0,10.0)).toPoint(),Qt::LeftButton,Qt::LeftButton,Qt::NoModifier);
-    mousePressEvent(&ev);
-    QMouseEvent ev2(QEvent::MouseButtonRelease,(center+QPointF(10.0,10.0)).toPoint(),Qt::LeftButton,Qt::LeftButton,Qt::NoModifier);
-    mouseReleaseEvent(&ev2);
-    QMouseEvent ev3(QEvent::MouseButtonPress,(center+QPointF(10.0,20.0)).toPoint(),Qt::LeftButton,Qt::LeftButton,Qt::NoModifier);
-    mousePressEvent(&ev3);
-    QMouseEvent ev4(QEvent::MouseButtonRelease,(center+QPointF(10.0,30.0)).toPoint(),Qt::LeftButton,Qt::LeftButton,Qt::NoModifier);
-    mouseReleaseEvent(&ev4);
-    QMouseEvent ev5(QEvent::MouseButtonPress,(center+QPointF(-80.0,60.0)).toPoint(),Qt::LeftButton,Qt::LeftButton,Qt::NoModifier);
-    mousePressEvent(&ev5);
-    QMouseEvent ev6(QEvent::MouseButtonRelease,(center+QPointF(-81.0,30.0)).toPoint(),Qt::LeftButton,Qt::LeftButton,Qt::NoModifier);
-    mouseReleaseEvent(&ev6);
+
+
+    mBalls.clear();
+    for(size_t i = 0;i<mNumBalls;++i){
+        mBalls.push_back(cBall(point2d_t(rand_number()*mGameWidth/2 - mGameWidth/4+center.x(),rand_number()*mGameHeight/2 - mGameHeight/4+center.y()),normalized(point2d_t(rand_number()-0.5,rand_number()-0.5))*mSpeed,0,8));
+    }
+
+//     QMouseEvent ev(QEvent::MouseButtonPress,(center+QPointF(0.0,10.0)).toPoint(),Qt::LeftButton,Qt::LeftButton,Qt::NoModifier);
+//     mousePressEvent(&ev);
+//     QMouseEvent ev2(QEvent::MouseButtonRelease,(center+QPointF(10.0,10.0)).toPoint(),Qt::LeftButton,Qt::LeftButton,Qt::NoModifier);
+//     mouseReleaseEvent(&ev2);
+//     QMouseEvent ev3(QEvent::MouseButtonPress,(center+QPointF(10.0,20.0)).toPoint(),Qt::LeftButton,Qt::LeftButton,Qt::NoModifier);
+//     mousePressEvent(&ev3);
+//     QMouseEvent ev4(QEvent::MouseButtonRelease,(center+QPointF(10.0,30.0)).toPoint(),Qt::LeftButton,Qt::LeftButton,Qt::NoModifier);
+//     mouseReleaseEvent(&ev4);
+//     QMouseEvent ev5(QEvent::MouseButtonPress,(center+QPointF(-80.0,60.0)).toPoint(),Qt::LeftButton,Qt::LeftButton,Qt::NoModifier);
+//     mousePressEvent(&ev5);
+//     QMouseEvent ev6(QEvent::MouseButtonRelease,(center+QPointF(-81.0,30.0)).toPoint(),Qt::LeftButton,Qt::LeftButton,Qt::NoModifier);
+//     mouseReleaseEvent(&ev6);
     update();
 }
 
 void 
 PartitionGameWindow::setNumBalls(int b){
     mNumBalls = b;
+    reset();
 }
 
 void 
 PartitionGameWindow::setSpeed(double s){
     mSpeed = s;
+    for(tBallList::iterator it = mBalls.begin();it!=mBalls.end();++it){
+        it->setSpeed(normalized(it->speed())*mSpeed);
+    }
 }
 
 void 
@@ -85,6 +112,10 @@ PartitionGameWindow::mouseReleaseEvent(QMouseEvent* event){
     update();
     if(!clipLine(mCurrentLine)) return;
 
+    for(tBallList::iterator it = mBalls.begin();it!=mBalls.end();++it){
+        if(distance(mCurrentLine,it->position())<it->radius()) return;
+    }
+
     mLines.push_back(mCurrentLine);
 
     point2d_t medio(mCurrentLine.p1()*0.5+mCurrentLine.p2()*0.5);
@@ -113,6 +144,7 @@ PartitionGameWindow::paintEvent(QPaintEvent* event){
     pt.drawText(10,10,QString().sprintf("%d x %d lines = %d balls = %d speed = %f",mGameWidth,mGameHeight,mLines.size(),mNumBalls,mSpeed));
     paintAreas(pt);
     paintLines(pt);
+    paintBalls(pt);
     paintCurrentLine(pt);
 }
 
@@ -146,12 +178,9 @@ PartitionGameWindow::paintCurrentLine(QPainter &pt){
 void 
 PartitionGameWindow::paintAreas(QPainter &pt){
     QVector<QColor> colors;
-    colors.push_back(QColor(255,0,0,128));
-    colors.push_back(QColor(255,255,0,128));
-    colors.push_back(QColor(255,0,255,128));
-    colors.push_back(QColor(0,255,0,128));
-    colors.push_back(QColor(0,0,255,128));
-    colors.push_back(QColor(0,255,255,128));
+    colors.push_back(QColor(100,0,0,100));
+    colors.push_back(QColor(0,100,0,100));
+    colors.push_back(QColor(0,0,100,100));
     int cidx = 0;
     pt.setPen(Qt::NoPen);
     for(tPolygonList::const_iterator it = mPolygons.begin();it!=mPolygons.end();++it){
@@ -159,6 +188,15 @@ PartitionGameWindow::paintAreas(QPainter &pt){
         pt.drawPolygon(toQPolygon(*it));
         ++cidx;
         if(cidx>=colors.size()) cidx = 0;
+    }
+}
+
+void 
+PartitionGameWindow::paintBalls(QPainter &pt){
+    pt.setBrush(QColor(255,255,0,255));
+    pt.setPen(QColor(0,0,0,255));
+    for(tBallList::const_iterator it = mBalls.begin();it!=mBalls.end();++it){
+        pt.drawEllipse(toQPoint(it->position()),it->radius(),it->radius());
     }
 }
 

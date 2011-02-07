@@ -12,6 +12,7 @@ bool numcmp(number_t n1,number_t n2);
 bool numcmp(number_t n1,number_t n2,number_t epsilon);
 bool between(number_t n,number_t from,number_t to);
 bool between(number_t n,number_t from,number_t to,number_t epsilon);
+number_t rand_number(void);
 
 number_t  lengthSquared(const point2d_t& p);
 number_t  length(const point2d_t& p);

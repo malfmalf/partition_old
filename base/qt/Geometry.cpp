@@ -25,6 +25,11 @@ between(number_t n,number_t from,number_t to,number_t epsilon){
 }
 
 number_t 
+rand_number(void){
+    return number_t(rand())/number_t(RAND_MAX);
+}
+
+number_t 
 length(const point2d_t& p){
     return sqrt(lengthSquared(p));
 }
