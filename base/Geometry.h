@@ -13,6 +13,7 @@ bool numcmp(number_t n1,number_t n2,number_t epsilon);
 bool between(number_t n,number_t from,number_t to);
 bool between(number_t n,number_t from,number_t to,number_t epsilon);
 number_t rand_number(void);
+int  rand_number(int min,int max);
 
 number_t  lengthSquared(const point2d_t& p);
 number_t  length(const point2d_t& p);
@@ -24,6 +25,7 @@ point2d_t translated(const point2d_t& p,const point2d_t& t);
 point2d_t transformed(const point2d_t& p,const point2d_t& t,number_t r);
 number_t  cross(const point2d_t& p1,const point2d_t& p2);
 number_t  dot(const point2d_t& p1,const point2d_t& p2);
+number_t triangleArea(const point2d_t& p1,const point2d_t& p2,const point2d_t& p3);
 
 class cLine;
 
@@ -84,6 +86,8 @@ public:
     bool ray_clip(const cLine& l,point2d_t& point) const;
     bool bisect(const cLine& l,cPolygon& pl1,cPolygon& pl2);
     point2d_t center(void) const;
+    number_t area(void) const;
+    int idip1,idip2;
 private:
     tPointList mPoints;
     tLineList  mLines;
@@ -91,4 +95,5 @@ private:
     void _calclines(void);
 };
 
+typedef std::vector<cPolygon> tPolygonList;
 

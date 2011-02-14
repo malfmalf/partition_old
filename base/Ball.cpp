@@ -55,7 +55,7 @@ cBall::step(number_t ts){
     mPosition += mSpeed*ts;
 }
 
-void 
+bool 
 cBall::collide(const tLineList& lines,const tBallList& balls){
     tPointList normals;
     point2d_t p;
@@ -68,7 +68,7 @@ cBall::collide(const tLineList& lines,const tBallList& balls){
         if(&(*it)==this) continue;
         if(distance(it->mPosition,mPosition)<mRadius+it->mRadius) normals.push_back(normalized(mPosition-it->mPosition));
     }
-    if(normals.empty()) return;
+    if(normals.empty()) return false;
 
     point2d_t col_normal(0,0);
     for(tPointList::const_iterator it = normals.begin();it!=normals.end();++it){
@@ -77,4 +77,6 @@ cBall::collide(const tLineList& lines,const tBallList& balls){
     col_normal = normalized(col_normal);
 
     mSpeed -= 2.0*col_normal*dot(mSpeed,col_normal);
+
+    return true;
 }

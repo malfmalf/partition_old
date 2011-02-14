@@ -21,7 +21,7 @@ public:
     void      setRadius(number_t val);
 
     void      step(number_t ts);
-    void      collide(const tLineList& lines,const tBallList& balls);
+    bool      collide(const tLineList& lines,const tBallList& balls);
 
 private:
     point2d_t mPosition;

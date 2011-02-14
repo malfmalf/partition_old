@@ -1,0 +1,55 @@
+#!/usr/bin/env mkb
+
+file 	PartitionAirplay.defines.txt
+
+define DATA_PATH='"../data"'
+
+options 
+{ 
+	s3e-data-dir="../data" 
+	strict-mkb
+} 
+
+files
+{
+    PartitionMain.cpp
+	(../base)
+		Ball.h
+		Ball.cpp
+		Game.h
+		Game.cpp
+		Utils.h
+		Geometry.h
+	(../base/airplay)
+		Geometry.cpp
+		Utils.cpp
+		UtilsAirplay.cpp
+		UtilsAirplay.h
+}
+
+subprojects 
+{ 
+    iwutil
+    iw2d 
+    iwui 
+}
+
+includepaths
+{
+ .
+ ../base 
+ ../base/airplay
+}
+
+deployments
+{
+	networking='0'
+}
+
+
+assets
+{
+	(../data-ram/data-gles1)
+	iw2dstrings.group.bin
+
+}
